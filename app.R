@@ -1,34 +1,32 @@
 library(shiny)
-library(kableExtra)
-library(knitr)
-library(tidyverse)
 library(circacompare)
+library(tidyverse)
+library(kableExtra)
 
-ui <-
-  shinyUI(fluidPage(
-    titlePanel("CircaCompare"),
-    sidebarLayout(
-      sidebarPanel(
-        fileInput("file1", "Choose CSV File",
-          accept = c(
-            "text/csv",
-            "text/comma-separated-values,text/plain",
-            ".csv"
-          )
-        ),
-        tags$hr(),
-        uiOutput("time"),
-        uiOutput("group"),
-        uiOutput("outcome"),
-        tags$hr(),
-        uiOutput("ui.action")
+ui <- fluidPage(
+  titlePanel("CircaCompare"),
+  sidebarLayout(
+    sidebarPanel(
+      fileInput("file1", "Choose CSV File",
+        accept = c(
+          "text/csv",
+          "text/comma-separated-values,text/plain",
+          ".csv"
+        )
       ),
-      mainPanel(
-        plotOutput("plot"),
-        tableOutput("contents")
-      )
+      tags$br(),
+      uiOutput("time_selecter"),
+      uiOutput("group_selecter"),
+      uiOutput("outcome_selecter"),
+      tags$br(),
+      uiOutput("ui.action")
+    ),
+    mainPanel(
+      plotOutput("plot"),
+      tableOutput("contents")
     )
-  ))
+  )
+)
 
 server <- function(input, output, session) {
   filedata <- reactive({
@@ -39,34 +37,41 @@ server <- function(input, output, session) {
     read.csv(infile$datapath)
   })
 
-  output$time <- renderUI({
+  cols <- reactive({
     df <- filedata()
     if (is.null(df)) {
       return(NULL)
+    } else {
+      return(names(df))
     }
-    items <- names(df)
-    names(items) <- items
-    selectInput("time", "Select the TIME (INDEPENDENT) variable from:", items)
   })
 
-  output$group <- renderUI({
-    df <- filedata()
-    if (is.null(df)) {
+  output$time_selecter <- renderUI({
+    if (is.null(cols())) {
       return(NULL)
     }
-    items <- names(df)
-    names(items) <- items
-    selectInput("group", "Select the GROUPING variable from:", items)
+    selectInput("time", "Select the TIME (INDEPENDENT) variable from:", cols())
   })
 
-  output$outcome <- renderUI({
-    df <- filedata()
-    if (is.null(df)) {
+  output$group_selecter <- renderUI({
+    if (is.null(cols())) {
       return(NULL)
     }
-    items <- names(df)
-    names(items) <- items
-    selectInput("outcome", "Select the OUTCOME (DEPENDENT) variable from:", items)
+    selectInput("group", "Select the GROUPING variable from:", cols())
+  })
+
+  output$outcome_selecter <- renderUI({
+    if (is.null(cols())) {
+      return(NULL)
+    }
+    selectInput("outcome", "Select the OUTCOME (DEPENDENT) variable from:", cols())
+  })
+
+  output$ui.action <- renderUI({
+    if (is.null(input$file1)) {
+      return()
+    }
+    actionButton("action", "Run")
   })
 
   observeEvent(input$action, {
@@ -84,7 +89,7 @@ server <- function(input, output, session) {
       )
     })
 
-    output$contents <- renderText({ # works with renderPrint()
+    output$contents <- renderText({
       if (class(cc_obj) != "list") {
         return(cc_obj)
       }
@@ -103,14 +108,6 @@ server <- function(input, output, session) {
       }
       cc_obj$plot
     })
-  })
-
-
-  output$ui.action <- renderUI({
-    if (is.null(input$file1)) {
-      return()
-    }
-    actionButton("action", "Run")
   })
 }
 
