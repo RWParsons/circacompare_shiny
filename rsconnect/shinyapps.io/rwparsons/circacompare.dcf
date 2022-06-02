@@ -5,6 +5,10 @@ account: rwparsons
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1340436
-bundleId: 2742785
+bundleId: 5969679
 url: https://rwparsons.shinyapps.io/circacompare/
-when: 1579582682.53157
+when: 1654129028.73194
+lastSyncTime: 1654129028.73195
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: test_data.csv
