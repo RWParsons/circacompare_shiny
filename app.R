@@ -81,17 +81,20 @@ server <- function(input, output, session) {
         return(NULL)
       }
       set.seed(42)
-      cc_obj <- circacompare(
-        df,
-        col_time = input$time,
-        col_group = input$group,
-        col_outcome = input$outcome
-      )
+      cc_obj <- suppressWarnings(
+        evaluate::try_capture_stack(
+          circacompare(
+            df,
+            col_time = input$time,
+            col_group = input$group,
+            col_outcome = input$outcome
+          ),
+          env = parent.frame()))
     })
 
     output$contents <- renderText({
-      if (class(cc_obj) != "list") {
-        return(cc_obj)
+      if (inherits(cc_obj, "error")) {
+        return(cc_obj$message)
       }
       cc_obj$summary %>%
         mutate(
@@ -103,7 +106,7 @@ server <- function(input, output, session) {
     })
 
     output$plot <- renderPlot({
-      if (class(cc_obj) != "list") {
+      if (!inherits(cc_obj, "list")) {
         return(NULL)
       }
       cc_obj$plot
